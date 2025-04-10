@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import axios from "axios";
 import "./signup.css";
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", name: "", password: "" });
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
@@ -18,12 +19,22 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
+      // Step 1: Sign up using Firebase Auth
       await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
+
+      // Step 2: Send user data to Spring Boot backend
+      await axios.post("http://localhost:8080/api/users/signup", {
+        email: formData.email,
+        name: formData.name,
+        password: formData.password, // optional to store
+      });
+
       alert("Signup successful!");
     } catch (err) {
       setError(err.message);
