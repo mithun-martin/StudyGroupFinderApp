@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import axios from "axios";
 import "./signup.css";
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", name: "", password: "", year: "", branch: "" });
+
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
@@ -18,17 +20,34 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+  
     try {
-      await createUserWithEmailAndPassword(
+      // Step 1: Sign up using Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
-      alert("Signup successful!");
+  
+      // Step 2: Send user data to Spring Boot backend without the password
+      const res = await axios.post("http://localhost:8080/api/users/signup", {
+        email: formData.email,
+        name: formData.name,
+        year: formData.year, // Send year
+        branch: formData.branch, // Send branch
+      });
+  
+      if (res.status === 200) {
+        alert("Signup successful!");
+      } else {
+        setError("Error saving user data.");
+      }
     } catch (err) {
-      setError(err.message);
+      console.error("Error:", err);  // Log the error for debugging
+      setError("Signup failed. Please try again.");
     }
   };
+  
 
   return (
     <div className="signup-container">
@@ -49,14 +68,14 @@ const Signup = () => {
           required
         />
         <input
-          type="year"
+          type="text"
           name="year"
           placeholder="Year"
           onChange={handleChange}
           required
         />
         <input
-          type="branch"
+          type="text"
           name="branch"
           placeholder="Branch"
           onChange={handleChange}
