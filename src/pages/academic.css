@@ -1,0 +1,99 @@
+.academic-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.academic-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.user-info-box {
+  background-color: #f4f6f8;
+  border-left: 6px solid #3498db;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.user-info-label {
+  font-weight: bold;
+  color: #34495e;
+}
+
+.user-info-value {
+  color: #2c3e50;
+}
+
+.group-card {
+  background-color: #ecf0f1;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s;
+}
+
+.group-card:hover {
+  transform: translateY(-2px);
+}
+
+.group-subject {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.3rem;
+}
+
+.group-topic {
+  font-style: italic;
+  color: #7f8c8d;
+  margin-bottom: 0.5rem;
+}
+
+.member-list {
+  margin-top: 0.5rem;
+}
+
+.member-list ul {
+  padding-left: 1.2rem;
+}
+
+.member-list li {
+  margin-bottom: 4px;
+  color: #34495e;
+}
+.create-group-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-width: 400px;
+  margin-top: 1rem;
+}
+
+.create-group-form input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.create-group-form button {
+  background-color: #3498db;
+  color: white;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease-in-out;
+}
+
+.create-group-form button:hover {
+  background-color: #2980b9;
+}

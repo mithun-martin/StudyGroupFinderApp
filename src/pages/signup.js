@@ -49,6 +49,20 @@ const Signup = () => {
           required
         />
         <input
+          type="year"
+          name="year"
+          placeholder="Year"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="branch"
+          name="branch"
+          placeholder="Branch"
+          onChange={handleChange}
+          required
+        />
+        <input
           type="password"
           name="password"
           placeholder="Password"

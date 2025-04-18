@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./login.css";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // 🔥 For navigation after login
 
   const handleChange = (e) => {
     setFormData({
@@ -27,13 +28,13 @@ const Login = () => {
         formData.password
       );
 
-      // Get Firebase ID Token
+      // Get Firebase ID Token (optional)
       const user = userCredential.user;
       const idToken = await user.getIdToken();
       console.log("🔥 Firebase ID Token:", idToken);
 
       alert("Login successful!");
-      // TODO: Send token to backend, redirect to dashboard based on role
+      navigate("/path"); // 👈 Redirect to PathPage
     } catch (err) {
       setError(err.message);
     }

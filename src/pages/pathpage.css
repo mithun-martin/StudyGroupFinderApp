@@ -1,0 +1,12 @@
+.path-container {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.path-buttons button {
+  margin: 20px;
+  padding: 15px 30px;
+  font-size: 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
