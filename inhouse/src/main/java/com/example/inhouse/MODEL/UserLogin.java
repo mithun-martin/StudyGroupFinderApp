@@ -1,24 +1,24 @@
 package com.example.inhouse.MODEL;
 
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users_login")
 @Getter
 @Setter
 @NoArgsConstructor
-public class User {
+
+public class UserLogin {
 
     @Id
-
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //Provided by Firebase, so no auto-generation
     private long uid;
-
-
     private String email;
-    private String name;
+
+
 
 }
