@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Academic = () => {
   const [formData, setFormData] = useState({
-    subject: '',
-    topic: '',
-    year: '',
-    branch: '',
+    subject: "",
+    topic: "",
+    year: "",
+    branch: "",
   });
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [studyGroups, setStudyGroups] = useState([]);
+
+  // Fetch all study groups on component mount
+  useEffect(() => {
+    const fetchStudyGroups = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/api/study-groups/all"
+        );
+        setStudyGroups(response.data);
+      } catch (error) {
+        console.error("Error fetching study groups:", error);
+      }
+    };
+
+    fetchStudyGroups();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -21,37 +38,42 @@ const Academic = () => {
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     try {
-      // Post request to backend API to create the group
-      const response = await axios.post('http://localhost:8080/api/study-groups/create', formData);
-      console.log('Study group created:', response.data);
-      alert('Study group created successfully!');
-      // Optionally reset form or hide form after submission
+      const response = await axios.post(
+        "http://localhost:8080/api/study-groups/create",
+        formData
+      );
+      console.log("Study group created:", response.data);
+      alert("Study group created successfully!");
       setFormData({
-        subject: '',
-        topic: '',
-        year: '',
-        branch: '',
+        subject: "",
+        topic: "",
+        year: "",
+        branch: "",
       });
       setIsFormVisible(false);
+
+      // Refresh the list
+      const refreshedGroups = await axios.get(
+        "http://localhost:8080/api/study-groups/all"
+      );
+      setStudyGroups(refreshedGroups.data);
     } catch (error) {
-      console.error('Error creating study group:', error);
-      alert('Failed to create study group!');
+      console.error("Error creating study group:", error);
+      alert("Failed to create study group!");
     }
   };
 
   return (
     <div className="academic-container">
       <h2 className="academic-title">Study Group</h2>
-      
-      {/* Button to toggle form visibility */}
+
       <button
         onClick={() => setIsFormVisible(!isFormVisible)}
         className="create-group-button"
       >
-        {isFormVisible ? 'Cancel' : 'Create Study Group'}
+        {isFormVisible ? "Cancel" : "Create Study Group"}
       </button>
 
-      {/* Form to create study group */}
       {isFormVisible && (
         <form className="create-group-form" onSubmit={handleCreateGroup}>
           <label>
@@ -97,6 +119,23 @@ const Academic = () => {
           <button type="submit">Submit Group</button>
         </form>
       )}
+
+      {/* View all study groups */}
+      <div className="study-group-list">
+        <h3>Available Study Groups</h3>
+        {studyGroups.length === 0 ? (
+          <p>No study groups available.</p>
+        ) : (
+          <ul>
+            {studyGroups.map((group, index) => (
+              <li key={index}>
+                <strong>{group.subject}</strong> – {group.topic} ({group.year},{" "}
+                {group.branch})
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };
