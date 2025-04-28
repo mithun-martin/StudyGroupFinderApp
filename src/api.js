@@ -58,3 +58,15 @@ export const declineGroupRequest = async (requestId) => {
     throw error;
   }
 };
+export const fetchGroupMembers = async (groupId) => {
+  try {
+    // Ensure groupId is passed as UUID
+    const response = await axios.get(
+      `${API_URL}/users/members?groupId=${groupId}` // Ensure `groupId` is passed as UUID
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Full error: ", error.response);
+    throw error;
+  }
+};

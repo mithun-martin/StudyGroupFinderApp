@@ -1,7 +1,8 @@
-// src/pages/Academic.js
 import React, { useState, useEffect } from "react";
-import { fetchStudyGroups, createStudyGroup, sendJoinRequest } from "../api"; // Import API functions
+import { fetchStudyGroups, createStudyGroup, sendJoinRequest, fetchGroupMembers } from "../api"; // Import API functions
+import { getFirestore, doc, getDoc } from "firebase/firestore"; 
 
+const db = getFirestore(); 
 const Academic = () => {
   const [formData, setFormData] = useState({
     subject: "",
@@ -11,12 +12,14 @@ const Academic = () => {
   });
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [studyGroups, setStudyGroups] = useState([]);
+  const [groupMembers, setGroupMembers] = useState({});
 
   // Fetch all study groups on component mount
   useEffect(() => {
     const getStudyGroups = async () => {
       try {
-        const groups = await fetchStudyGroups(); // Call the function from api.js
+        const groups = await fetchStudyGroups();
+        console.log(groups); // Log groups to check if `id` is present
         setStudyGroups(groups);
       } catch (error) {
         console.error("Error fetching study groups:", error);
@@ -33,7 +36,16 @@ const Academic = () => {
       [name]: value,
     }));
   };
-
+  const getUserNameByUID = async (uid) => {
+    const docRef = doc(db, "users", uid);  // Assuming your users are stored in a collection called "users"
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().name;  // Assuming the user document has a "name" field
+    } else {
+      console.log("No such user!");
+      return null;
+    }
+  };
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     try {
@@ -69,6 +81,23 @@ const Academic = () => {
     }
   };
 
+  const handleViewMembers = async (groupId) => {
+    console.log("Group ID:", groupId);
+    try {
+      const members = await fetchGroupMembers(groupId); // Fetch members for the given groupId
+      const membersWithNames = await Promise.all(members.map(async (member) => {
+        const username = await getUserNameByUID(member.uid);  // Fetch the user name by UID
+        return { ...member, name: username || "Unknown" }; // Add name to the member object
+      }));
+      setGroupMembers((prevMembers) => ({
+        ...prevMembers,
+        [groupId]: membersWithNames,  // Store the members with name
+      }));
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      alert("Failed to fetch members!");
+    }
+  };
   return (
     <div className="academic-container">
       <h2 className="academic-title">Study Group</h2>
@@ -135,20 +164,33 @@ const Academic = () => {
           <ul>
             {studyGroups.map((group, index) => (
               <li key={index}>
-                <strong>{group.subject}</strong> – {group.topic} ({group.year},{" "}
-                {group.branch})
+                <strong>{group.subject}</strong> – {group.topic} ({group.year}, {group.branch})
                 <div className="group-members">
-                  <p>Members:</p>
-                  {group.members.map((member, idx) => (
-                    <p key={idx}>
-                      {member.name} ({member.email})
-                    </p>
-                  ))}
+                  
+
+                  {groupMembers[group.id] ? (
+                    groupMembers[group.id].length > 0 ? (
+                      groupMembers[group.id].map((member, idx) => (
+                        <p key={idx}>{member.name} ({member.email})</p>
+                      ))
+                    ) : (
+                      <p>No members yet.</p>
+                    )
+                  ) : null}
                 </div>
-                {/* Request to Join Button */}
-                <button onClick={() => handleJoinRequest(group.id)}>
-                  Request to Join
-                </button>
+                <button 
+  onClick={() => group.groupId && handleViewMembers(group.groupId)} 
+  disabled={!group.groupId || group.groupId === ""}
+>
+  View Members
+</button>
+
+<button 
+  onClick={() => group.groupId && handleJoinRequest(group.groupId)} 
+  disabled={!group.groupId || group.groupId === ""}
+>
+  Request to Join
+</button>
               </li>
             ))}
           </ul>
