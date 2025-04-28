@@ -1,5 +1,6 @@
+// src/pages/Academic.js
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { fetchStudyGroups, createStudyGroup, sendJoinRequest } from "../api"; // Import API functions
 
 const Academic = () => {
   const [formData, setFormData] = useState({
@@ -13,18 +14,16 @@ const Academic = () => {
 
   // Fetch all study groups on component mount
   useEffect(() => {
-    const fetchStudyGroups = async () => {
+    const getStudyGroups = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:8080/api/study-groups/all"
-        );
-        setStudyGroups(response.data);
+        const groups = await fetchStudyGroups(); // Call the function from api.js
+        setStudyGroups(groups);
       } catch (error) {
         console.error("Error fetching study groups:", error);
       }
     };
 
-    fetchStudyGroups();
+    getStudyGroups();
   }, []);
 
   const handleInputChange = (e) => {
@@ -38,11 +37,8 @@ const Academic = () => {
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/study-groups/create",
-        formData
-      );
-      console.log("Study group created:", response.data);
+      const createdGroup = await createStudyGroup(formData); // Call the function from api.js
+      console.log("Study group created:", createdGroup);
       alert("Study group created successfully!");
       setFormData({
         subject: "",
@@ -53,13 +49,23 @@ const Academic = () => {
       setIsFormVisible(false);
 
       // Refresh the list
-      const refreshedGroups = await axios.get(
-        "http://localhost:8080/api/study-groups/all"
-      );
-      setStudyGroups(refreshedGroups.data);
+      const refreshedGroups = await fetchStudyGroups(); // Call the function from api.js
+      setStudyGroups(refreshedGroups);
     } catch (error) {
       console.error("Error creating study group:", error);
       alert("Failed to create study group!");
+    }
+  };
+
+  // Handle the "Request to Join" button click
+  const handleJoinRequest = async (groupId) => {
+    try {
+      const userId = "user-id-here"; // Replace with the actual user ID (from authentication context or state)
+      await sendJoinRequest(groupId, userId); // Call the function to send the join request
+      alert("Request to join the group has been sent!");
+    } catch (error) {
+      console.error("Error sending join request:", error);
+      alert("Failed to send join request!");
     }
   };
 
@@ -131,6 +137,18 @@ const Academic = () => {
               <li key={index}>
                 <strong>{group.subject}</strong> – {group.topic} ({group.year},{" "}
                 {group.branch})
+                <div className="group-members">
+                  <p>Members:</p>
+                  {group.members.map((member, idx) => (
+                    <p key={idx}>
+                      {member.name} ({member.email})
+                    </p>
+                  ))}
+                </div>
+                {/* Request to Join Button */}
+                <button onClick={() => handleJoinRequest(group.id)}>
+                  Request to Join
+                </button>
               </li>
             ))}
           </ul>

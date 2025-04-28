@@ -4,6 +4,7 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import PathPage from "./pages/PathPage";
 import Academic from "./pages/Academic";
+import MyRequests from "./pages/MyRequests";
 function App() {
   return (
     <Router>
@@ -13,6 +14,7 @@ function App() {
         <Route path="/path" element={<PathPage />} />
         <Route path="/academic" element={<Academic />} />
         <Route path="*" element={<Signup />} /> {/* Default to signup */}
+        <Route path="/my-requests" element={<MyRequests groupId="123" />} />
       </Routes>
     </Router>
   );
