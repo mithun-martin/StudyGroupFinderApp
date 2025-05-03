@@ -14,10 +14,9 @@ export const createStudyGroup = async (formData) => {
 
 // Add this function to handle the join request
 export const sendJoinRequest = async (groupId, userId) => {
-  const response = await axios.post(`${API_URL}/group-requests`, {
-    groupId,
-    userId,
-  });
+  const response = await axios.post(
+    `http://localhost:8080/api/group-requests?groupId=${groupId}&uid=${userId}`
+  );
   return response.data;
 };
 
@@ -60,13 +59,14 @@ export const declineGroupRequest = async (requestId) => {
 };
 export const fetchGroupMembers = async (groupId) => {
   try {
-    // Ensure groupId is passed as UUID
-    const response = await axios.get(
-      `${API_URL}/users/members?groupId=${groupId}` // Ensure `groupId` is passed as UUID
-    );
-    return response.data;
+    const response = await fetch(`/api/users/${groupId}/members`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch group members");
+    }
+    const jsonData = await response.json();
+    return jsonData;
   } catch (error) {
-    console.error("Full error: ", error.response);
-    throw error;
+    console.error("Error fetching group members:", error);
+    return [];
   }
 };

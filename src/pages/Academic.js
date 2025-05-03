@@ -1,8 +1,13 @@
+// src/pages/Academic.js
 import React, { useState, useEffect } from "react";
-import { fetchStudyGroups, createStudyGroup, sendJoinRequest, fetchGroupMembers } from "../api"; // Import API functions
-import { getFirestore, doc, getDoc } from "firebase/firestore"; 
+import {
+  fetchStudyGroups,
+  createStudyGroup,
+  sendJoinRequest,
+  fetchGroupMembers,
+} from "../api";
+import { getCurrentUserId } from "../firebase";
 
-const db = getFirestore(); 
 const Academic = () => {
   const [formData, setFormData] = useState({
     subject: "",
@@ -10,23 +15,22 @@ const Academic = () => {
     year: "",
     branch: "",
   });
+  const [expandedGroupId, setExpandedGroupId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [studyGroups, setStudyGroups] = useState([]);
-  const [groupMembers, setGroupMembers] = useState({});
+  const [membersByGroup, setMembersByGroup] = useState({});
 
-  // Fetch all study groups on component mount
+  // Fetch study groups on mount
   useEffect(() => {
-    const getStudyGroups = async () => {
+    const loadGroups = async () => {
       try {
         const groups = await fetchStudyGroups();
-        console.log(groups); // Log groups to check if `id` is present
         setStudyGroups(groups);
       } catch (error) {
         console.error("Error fetching study groups:", error);
       }
     };
-
-    getStudyGroups();
+    loadGroups();
   }, []);
 
   const handleInputChange = (e) => {
@@ -36,166 +40,134 @@ const Academic = () => {
       [name]: value,
     }));
   };
-  const getUserNameByUID = async (uid) => {
-    const docRef = doc(db, "users", uid);  // Assuming your users are stored in a collection called "users"
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data().name;  // Assuming the user document has a "name" field
-    } else {
-      console.log("No such user!");
-      return null;
-    }
-  };
+
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     try {
-      const createdGroup = await createStudyGroup(formData); // Call the function from api.js
-      console.log("Study group created:", createdGroup);
+      await createStudyGroup(formData);
       alert("Study group created successfully!");
-      setFormData({
-        subject: "",
-        topic: "",
-        year: "",
-        branch: "",
-      });
+      setFormData({ subject: "", topic: "", year: "", branch: "" });
       setIsFormVisible(false);
-
-      // Refresh the list
-      const refreshedGroups = await fetchStudyGroups(); // Call the function from api.js
-      setStudyGroups(refreshedGroups);
+      const refreshed = await fetchStudyGroups();
+      setStudyGroups(refreshed);
     } catch (error) {
       console.error("Error creating study group:", error);
-      alert("Failed to create study group!");
+      alert("Failed to create study group.");
     }
   };
 
-  // Handle the "Request to Join" button click
   const handleJoinRequest = async (groupId) => {
     try {
-      const userId = "user-id-here"; // Replace with the actual user ID (from authentication context or state)
-      await sendJoinRequest(groupId, userId); // Call the function to send the join request
-      alert("Request to join the group has been sent!");
+      const userId = getCurrentUserId();
+      if (!userId) {
+        alert("You must be logged in to send a join request.");
+        return;
+      }
+      await sendJoinRequest(groupId, userId);
+      alert("Join request sent!");
     } catch (error) {
       console.error("Error sending join request:", error);
-      alert("Failed to send join request!");
+      alert("Failed to send join request.");
     }
   };
 
   const handleViewMembers = async (groupId) => {
-    console.log("Group ID:", groupId);
-    try {
-      const members = await fetchGroupMembers(groupId); // Fetch members for the given groupId
-      const membersWithNames = await Promise.all(members.map(async (member) => {
-        const username = await getUserNameByUID(member.uid);  // Fetch the user name by UID
-        return { ...member, name: username || "Unknown" }; // Add name to the member object
-      }));
-      setGroupMembers((prevMembers) => ({
-        ...prevMembers,
-        [groupId]: membersWithNames,  // Store the members with name
-      }));
-    } catch (error) {
-      console.error("Error fetching group members:", error);
-      alert("Failed to fetch members!");
+    if (expandedGroupId === groupId) {
+      setExpandedGroupId(null);
+      return;
     }
+
+    if (!membersByGroup[groupId]) {
+      try {
+        const members = await fetchGroupMembers(groupId);
+        setMembersByGroup((prev) => ({ ...prev, [groupId]: members }));
+      } catch (error) {
+        console.error("Error fetching group members:", error);
+        alert("Failed to load group members.");
+      }
+    }
+
+    setExpandedGroupId(groupId);
   };
+
   return (
     <div className="academic-container">
-      <h2 className="academic-title">Study Group</h2>
+      <h2>Study Groups</h2>
 
-      <button
-        onClick={() => setIsFormVisible(!isFormVisible)}
-        className="create-group-button"
-      >
+      <button onClick={() => setIsFormVisible(!isFormVisible)}>
         {isFormVisible ? "Cancel" : "Create Study Group"}
       </button>
 
       {isFormVisible && (
-        <form className="create-group-form" onSubmit={handleCreateGroup}>
-          <label>
-            Subject:
-            <input
-              type="text"
-              name="subject"
-              value={formData.subject}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Topic:
-            <input
-              type="text"
-              name="topic"
-              value={formData.topic}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Year:
-            <input
-              type="text"
-              name="year"
-              value={formData.year}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Branch:
-            <input
-              type="text"
-              name="branch"
-              value={formData.branch}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
+        <form onSubmit={handleCreateGroup}>
+          <input
+            type="text"
+            name="subject"
+            placeholder="Subject"
+            value={formData.subject}
+            onChange={handleInputChange}
+            required
+          />
+          <input
+            type="text"
+            name="topic"
+            placeholder="Topic"
+            value={formData.topic}
+            onChange={handleInputChange}
+            required
+          />
+          <input
+            type="text"
+            name="year"
+            placeholder="Year"
+            value={formData.year}
+            onChange={handleInputChange}
+            required
+          />
+          <input
+            type="text"
+            name="branch"
+            placeholder="Branch"
+            value={formData.branch}
+            onChange={handleInputChange}
+            required
+          />
           <button type="submit">Submit Group</button>
         </form>
       )}
 
-      {/* View all study groups */}
-      <div className="study-group-list">
-        <h3>Available Study Groups</h3>
+      <ul>
         {studyGroups.length === 0 ? (
           <p>No study groups available.</p>
         ) : (
-          <ul>
-            {studyGroups.map((group, index) => (
-              <li key={index}>
-                <strong>{group.subject}</strong> – {group.topic} ({group.year}, {group.branch})
-                <div className="group-members">
-                  
+          studyGroups.map((group, index) => (
+            <li key={index}>
+              <strong>{group.subject}</strong> – {group.topic} ({group.year},{" "}
+              {group.branch})<br />
+              <button onClick={() => handleJoinRequest(group.groupId)}>
+                Request to Join
+              </button>
+              <button onClick={() => handleViewMembers(group.groupId)}>
+                {expandedGroupId === group.groupId ? "Hide Members" : "View Members"}
+              </button>
 
-                  {groupMembers[group.id] ? (
-                    groupMembers[group.id].length > 0 ? (
-                      groupMembers[group.id].map((member, idx) => (
-                        <p key={idx}>{member.name} ({member.email})</p>
-                      ))
-                    ) : (
-                      <p>No members yet.</p>
-                    )
-                  ) : null}
-                </div>
-                <button 
-  onClick={() => group.groupId && handleViewMembers(group.groupId)} 
-  disabled={!group.groupId || group.groupId === ""}
->
-  View Members
-</button>
-
-<button 
-  onClick={() => group.groupId && handleJoinRequest(group.groupId)} 
-  disabled={!group.groupId || group.groupId === ""}
->
-  Request to Join
-</button>
-              </li>
-            ))}
-          </ul>
+              {expandedGroupId === group.groupId && membersByGroup[group.groupId] && (
+  membersByGroup[group.groupId].length > 0 ? (
+    <ul>
+      {membersByGroup[group.groupId].map((member, idx) => (
+        <li key={idx}>
+          {member.name || member.displayName || member.uid}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>No members in this group yet.</p>
+  )
+)}
+            </li>
+          ))
         )}
-      </div>
+      </ul>
     </div>
   );
 };
