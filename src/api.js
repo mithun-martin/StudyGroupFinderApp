@@ -59,14 +59,70 @@ export const declineGroupRequest = async (requestId) => {
 };
 export const fetchGroupMembers = async (groupId) => {
   try {
-    const response = await fetch(`/api/users/${groupId}/members`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch group members");
-    }
-    const jsonData = await response.json();
-    return jsonData;
+    const response = await axios.get(
+      `http://localhost:8080/api/group-members/group/${groupId}`
+    );
+    return response.data; // Array of StudyGroupMember objects
   } catch (error) {
     console.error("Error fetching group members:", error);
     return [];
   }
+};
+export const fetchMyGroups = async (uid) => {
+  try {
+    const response = await axios.get(`${API_URL}/users/user/${uid}/groups`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching my groups:", error);
+    throw error;
+  }
+};
+export const registerUser = async ({ firebaseUid, email, name, year, branch }) => {
+  const response = await axios.post(`${API_URL}/users/register`, {
+    firebaseUid,
+    email,
+    name,
+    year,
+    branch,
+  });
+  return response.data;
+};
+export const addStudyGroupMember = async (groupId, userId) => {
+  const response = await axios.post(
+    `http://localhost:8080/api/group-members/add?groupId=${groupId}&userId=${userId}`
+  );
+  return response.data;
+};
+export const fetchGroupMembershipsForUser = async (userId) => {
+  const response = await axios.get(`http://localhost:8080/api/group-members/user/${userId}`);
+  return response.data; // Expects array of { id, groupId, userId }
+};
+export const fetchGroupsForUser = async (userId) => {
+  const response = await axios.get(`http://localhost:8080/api/group-members/user/${userId}/groups`);
+  return response.data; // Returns an array of groups
+};
+export const fetchPendingRequestsByGroupId = async (groupId) => {
+  const response = await axios.get(
+    `http://localhost:8080/api/group-requests/pending?groupId=${groupId}`
+  );
+  return response.data; // Array of JoinRequest objects
+};
+export const fetchUserById = async (userId) => {
+  const response = await axios.get(`http://localhost:8080/api/users/${userId}`);
+  return response.data; // Returns the User object
+};
+// Accept a join request
+export const acceptJoinRequest = async (requestId) => {
+  const response = await axios.put(
+    `http://localhost:8080/api/group-requests/${requestId}/accept`
+  );
+  return response.data;
+};
+
+// Decline a join request
+export const declineJoinRequest = async (requestId) => {
+  const response = await axios.put(
+    `http://localhost:8080/api/group-requests/${requestId}/decline`
+  );
+  return response.data;
 };

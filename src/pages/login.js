@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios"; // <-- Import axios
 import "./login.css";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const navigate = useNavigate(); // 🔥 For navigation after login
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -21,22 +22,29 @@ const Login = () => {
     setError("");
 
     try {
-      // Sign in the user
+      // 1. Sign in the user with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
 
-      // Get Firebase ID Token (optional)
       const user = userCredential.user;
-      const idToken = await user.getIdToken();
-      console.log("🔥 Firebase ID Token:", idToken);
+      const firebaseUid = user.uid;
+
+      // 2. Fetch backend user by Firebase UID
+      const res = await axios.get(
+        `http://localhost:8080/api/users/firebase/${firebaseUid}`
+      );
+      const backendUser = res.data;
+
+      // 3. Save backend user ID in localStorage
+      localStorage.setItem("userId", backendUser.id);
 
       alert("Login successful!");
-      navigate("/path"); // 👈 Redirect to PathPage
+      navigate("/path"); // 👈 Redirect to your dashboard or desired page
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Login failed.");
     }
   };
 

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../firebase"; // add db import
-import { doc, setDoc } from "firebase/firestore"; // import Firestore functions
-import axios from "axios";
+import { auth } from "../firebase";
+import { registerUser } from "../api"; // <-- Import the new API function
 import "./signup.css";
 
 const Signup = () => {
@@ -34,34 +33,32 @@ const Signup = () => {
         formData.email,
         formData.password
       );
-
       const user = userCredential.user;
 
-      // Step 2: Save additional info to Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
+      // Step 2: Register user in your backend (with Firebase UID)
+      const res = await registerUser({
+        firebaseUid: user.uid,
         email: formData.email,
         name: formData.name,
         year: formData.year,
         branch: formData.branch,
       });
 
-      // Step 3: Send user data to your Spring Boot backend (without password)
-      const res = await axios.post("http://localhost:8080/api/users/signup", {
-        email: formData.email,
-        name: formData.name,
-        year: formData.year,
-        branch: formData.branch,
-      });
-
-      if (res.status === 200) {
+      if (res && res.id) {
         alert("Signup successful!");
       } else {
         setError("Error saving user data to backend.");
       }
     } catch (err) {
-      console.error("Signup Error:", err.message);
-      setError("Signup failed. Please try again.");
+      // Firebase or backend error
+      if (err.code === "auth/email-already-in-use") {
+        setError("Email already in use.");
+      } else if (err.response && err.response.status === 409) {
+        setError("User already exists in the backend.");
+      } else {
+        setError("Signup failed. Please try again.");
+      }
+      console.error("Signup Error:", err);
     }
   };
 

@@ -5,6 +5,7 @@ import Login from "./pages/login";
 import PathPage from "./pages/PathPage";
 import Academic from "./pages/Academic";
 import MyRequests from "./pages/MyRequests";
+import MyGroups from "./pages/MyGroups";
 function App() {
   return (
     <Router>
@@ -13,6 +14,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/path" element={<PathPage />} />
         <Route path="/academic" element={<Academic />} />
+        <Route path="/my-groups" element={<MyGroups />} />
         <Route path="*" element={<Signup />} /> {/* Default to signup */}
         <Route path="/my-requests" element={<MyRequests groupId="123" />} />
       </Routes>
