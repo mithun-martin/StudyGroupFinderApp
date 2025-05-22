@@ -7,8 +7,8 @@ import {
   addStudyGroupMember,
   fetchUserById,
 } from "../api";
+import "./academic.css";
 
-// Helper to get backend userId from localStorage
 const getCurrentUserId = () => localStorage.getItem("userId");
 
 const Academic = () => {
@@ -18,13 +18,12 @@ const Academic = () => {
     year: "",
     branch: "",
   });
-  const [expandedGroupId, setExpandedGroupId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [studyGroups, setStudyGroups] = useState([]);
+  const [expandedGroupId, setExpandedGroupId] = useState(null);
   const [membersByGroup, setMembersByGroup] = useState({});
-  const [membersLoading, setMembersLoading] = useState({}); // Track loading state for each group
+  const [membersLoading, setMembersLoading] = useState({});
 
-  // Fetch study groups on mount
   useEffect(() => {
     const loadGroups = async () => {
       try {
@@ -39,42 +38,27 @@ const Academic = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Create group and add creator as member
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     try {
-      // 1. Create the study group
       const newGroup = await createStudyGroup(formData);
-
-      // 2. Get the current user's backend userId (from localStorage)
       const userId = getCurrentUserId();
-
-      // 3. Add the creator as a member
       if (userId && newGroup.groupId) {
         await addStudyGroupMember(newGroup.groupId, userId);
-      } else {
-        alert("Could not add creator as member: Missing userId or groupId");
       }
-
       alert("Study group created successfully!");
-
       setFormData({ subject: "", topic: "", year: "", branch: "" });
       setIsFormVisible(false);
       const refreshed = await fetchStudyGroups();
       setStudyGroups(refreshed);
     } catch (error) {
-      console.error("Error creating study group:", error);
       alert("Failed to create study group.");
     }
   };
 
-  // Handle join request
   const handleJoinRequest = async (groupId) => {
     try {
       const userId = getCurrentUserId();
@@ -84,137 +68,106 @@ const Academic = () => {
       }
       await sendJoinRequest(groupId, userId);
       alert("Join request sent!");
-    } catch (error) {
-      console.error("Error sending join request:", error);
+    } catch {
       alert("Failed to send join request.");
     }
   };
 
-  // View group members
   const handleViewMembers = async (groupId) => {
     if (expandedGroupId === groupId) {
       setExpandedGroupId(null);
       return;
     }
-
-    // If not already loaded, fetch members
     if (!membersByGroup[groupId]) {
       setMembersLoading((prev) => ({ ...prev, [groupId]: true }));
       try {
-        // 1. Fetch StudyGroupMember entries for this group
         const members = await fetchGroupMembers(groupId);
-
-        // 2. For each member, fetch user info (name/email)
-        const membersWithNames = await Promise.all(
+        const membersWithDetails = await Promise.all(
           members.map(async (member) => {
             let name = member.userId;
+            let email = "";
             try {
               const user = await fetchUserById(member.userId);
               name = user.name || user.email || member.userId;
-            } catch {
-              // fallback to userId if fetch fails
-            }
-            return { ...member, name };
+              email = user.email || "";
+            } catch {}
+            return { ...member, name, email };
           })
         );
-
-        setMembersByGroup((prev) => ({ ...prev, [groupId]: membersWithNames }));
-      } catch (error) {
-        console.error("Error fetching group members:", error);
-        alert("Failed to load group members.");
+        setMembersByGroup((prev) => ({ ...prev, [groupId]: membersWithDetails }));
+      } catch {
         setMembersByGroup((prev) => ({ ...prev, [groupId]: [] }));
       } finally {
         setMembersLoading((prev) => ({ ...prev, [groupId]: false }));
       }
     }
-
     setExpandedGroupId(groupId);
   };
 
   return (
-    <div className="academic-container">
-      <h2>Study Groups</h2>
+    <div className="academic-dark-bg">
+      <div className="academic-card">
+        <h1 className="academic-main-title">Find Your Own Study Group</h1>
+        <p className="academic-subtitle">Collaborate. Learn. Succeed.</p>
+        <button className="primary-btn" onClick={() => setIsFormVisible((v) => !v)}>
+          {isFormVisible ? "Cancel" : "➕ Create Study Group"}
+        </button>
+        {isFormVisible && (
+          <form className="dark-form" onSubmit={handleCreateGroup}>
+            <input name="subject" placeholder="Subject" value={formData.subject} onChange={handleInputChange} required />
+            <input name="topic" placeholder="Topic" value={formData.topic} onChange={handleInputChange} required />
+            <input name="year" placeholder="Year" value={formData.year} onChange={handleInputChange} required />
+            <input name="branch" placeholder="Branch" value={formData.branch} onChange={handleInputChange} required />
+            <button className="primary-btn" type="submit">🚀 Submit Group</button>
+          </form>
+        )}
+      </div>
 
-      <button onClick={() => setIsFormVisible(!isFormVisible)}>
-        {isFormVisible ? "Cancel" : "Create Study Group"}
-      </button>
-
-      {isFormVisible && (
-        <form onSubmit={handleCreateGroup}>
-          <input
-            type="text"
-            name="subject"
-            placeholder="Subject"
-            value={formData.subject}
-            onChange={handleInputChange}
-            required
-          />
-          <input
-            type="text"
-            name="topic"
-            placeholder="Topic"
-            value={formData.topic}
-            onChange={handleInputChange}
-            required
-          />
-          <input
-            type="text"
-            name="year"
-            placeholder="Year"
-            value={formData.year}
-            onChange={handleInputChange}
-            required
-          />
-          <input
-            type="text"
-            name="branch"
-            placeholder="Branch"
-            value={formData.branch}
-            onChange={handleInputChange}
-            required
-          />
-          <button type="submit">Submit Group</button>
-        </form>
-      )}
-
-      <ul>
+      <div className="group-list-dark">
         {studyGroups.length === 0 ? (
-          <p>No study groups available.</p>
+          <p className="empty-text">No study groups yet. Start one!</p>
         ) : (
           studyGroups.map((group) => {
             const groupId = group.groupId || group.id;
             return (
-              <li key={groupId}>
-                <strong>{group.subject}</strong> – {group.topic} ({group.year},{" "}
-                {group.branch})
-                <br />
-                <button onClick={() => handleJoinRequest(groupId)}>
-                  Request to Join
-                </button>
-                <button onClick={() => handleViewMembers(groupId)}>
-                  {expandedGroupId === groupId ? "Hide Members" : "View Members"}
-                </button>
-
+              <div className="group-card-dark" key={groupId}>
+                <div className="group-card-details">
+                  <p><strong>Subject:</strong> {group.subject}</p>
+                  <p><strong>Year:</strong> {group.year}</p>
+                  <p><strong>Branch:</strong> {group.branch}</p>
+                  <p><strong>Topic:</strong> {group.topic}</p>
+                </div>
+                <div className="group-actions">
+                  <button className="accent-btn" onClick={() => handleJoinRequest(groupId)}>
+                    Request to Join
+                  </button>
+                  <button className="secondary-btn" onClick={() => handleViewMembers(groupId)}>
+                    {expandedGroupId === groupId ? "Hide Members" : "View Members"}
+                  </button>
+                </div>
                 {expandedGroupId === groupId && (
-                  membersLoading[groupId] ? (
-                    <p>Loading members...</p>
-                  ) : membersByGroup[groupId] && membersByGroup[groupId].length > 0 ? (
-                    <ul>
-                      {membersByGroup[groupId].map((member, idx) => (
-                        <li key={idx}>
+                  <div className="members-list-dark">
+                    {membersLoading[groupId] ? (
+                      <p>Loading members...</p>
+                    ) : membersByGroup[groupId] && membersByGroup[groupId].length > 0 ? (
+                      membersByGroup[groupId].map((member, idx) => (
+                        <div className="member-pill" key={idx}>
                           {member.name}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No members in this group yet.</p>
-                  )
+                          {member.email && (
+                            <span style={{ color: "#888", fontSize: "0.95em" }}> ({member.email})</span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p>No members in this group yet.</p>
+                    )}
+                  </div>
                 )}
-              </li>
+              </div>
             );
           })
         )}
-      </ul>
+      </div>
     </div>
   );
 };

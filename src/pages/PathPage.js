@@ -5,23 +5,15 @@ import "./pathpage.css"; // optional styling
 const PathPage = () => {
   const navigate = useNavigate();
 
-  const handleChoice = (path) => {
-    if (path === "academic") {
-      navigate("/academic");
-    } else if (path === "hackathon") {
-      navigate("/hackathon");
-    }
-  };
-
   return (
     <div className="path-container">
-      <h2>Choose Your Path</h2>
+      <h2>Study Groups</h2>
       <div className="path-buttons">
-        <button onClick={() => handleChoice("academic")}>
-          📚 Academic Groups
+        <button onClick={() => navigate("/academic")}>
+          📚 View All Study Groups
         </button>
-        <button onClick={() => handleChoice("hackathon")}>
-          🚀 Hackathon Groups
+        <button onClick={() => navigate("/my-groups")}>
+          👥 My Study Groups
         </button>
       </div>
     </div>
@@ -29,3 +21,4 @@ const PathPage = () => {
 };
 
 export default PathPage;
+
